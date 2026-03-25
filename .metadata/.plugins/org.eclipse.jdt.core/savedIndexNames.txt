@@ -1,0 +1,2 @@
+INDEX VERSION 1.134+C:\Users\Paradox33\Documents\workspace-spring-tools-for-eclipse-4.32.1.RELEASE\entreprises - DTO\.metadata\.plugins\org.eclipse.jdt.core
+1865797976.index

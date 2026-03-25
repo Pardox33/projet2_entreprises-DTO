@@ -1,6 +1,5 @@
 package com.nadia.entreprises.service;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -18,16 +17,17 @@ import com.nadia.entreprises.repos.EntrepriseRepository;
 import com.nadia.entreprises.repos.SecteurRepository;
 
 @Service
-public class EntrepriseServiceImp implements EntrepriseService{
+public class EntrepriseServiceImp implements EntrepriseService {
+
 	@Autowired
 	EntrepriseRepository entrepriseRepository;
-	
+
 	@Autowired
 	SecteurRepository secteurRepository;
-	
-	@Autowired 
-	ModelMapper modelMapper; 
-	
+
+	@Autowired
+	ModelMapper modelMapper;
+
 	@Override
 	public EntreprisesDTO saveEntreprise(EntreprisesDTO e) {
 		return convertEntityToDto(entrepriseRepository.save(convertDtoToEntity(e)));
@@ -57,13 +57,8 @@ public class EntrepriseServiceImp implements EntrepriseService{
 	public List<EntreprisesDTO> getAllEntreprises() {
 		return entrepriseRepository.findAll().stream()
 				.map(this::convertEntityToDto)
+				.distinct()
 				.collect(Collectors.toList());
-				
-		/*List<Entreprise> ents =  entrepriseRepository.findAll(); 
-		List<EntreprisesDTO> listentDto = new ArrayList<>(ents.size()); 
-		for (Entreprise e : ents) 
-		listentDto.add(convertEntityToDto(e)); 
-		return listentDto;*/
 	}
 
 	@Override
@@ -83,7 +78,7 @@ public class EntrepriseServiceImp implements EntrepriseService{
 
 	@Override
 	public List<Entreprise> findByChiffreAff(String nom, Double chiffreAff) {
-		return entrepriseRepository.findByChiffreAff(nom,chiffreAff);
+		return entrepriseRepository.findByChiffreAff(nom, chiffreAff);
 	}
 
 	@Override
@@ -108,54 +103,25 @@ public class EntrepriseServiceImp implements EntrepriseService{
 
 	@Override
 	public List<Secteur> getAllSecteur() {
-		return secteurRepository.findAll() ;
+		return secteurRepository.findAll();
+	}
+
+	@Override
+	public Entreprise convertDtoToEntity(EntreprisesDTO entrepriseDto) {
+		Entreprise entreprise = modelMapper.map(entrepriseDto, Entreprise.class);
+		if (entrepriseDto.getSecteur() != null && entrepriseDto.getSecteur().getIdSec() != null) {
+			entreprise.setSecteur(secteurRepository.findById(entrepriseDto.getSecteur().getIdSec()).orElse(null));
+		}
+		return entreprise;
 	}
 
 	@Override
 	public EntreprisesDTO convertEntityToDto(Entreprise entreprise) {
-		
-		
 		modelMapper.getConfiguration().setMatchingStrategy(MatchingStrategies.LOOSE);
-		EntreprisesDTO entrepriseDTO = modelMapper.map(entreprise,EntreprisesDTO.class); 
-		return entrepriseDTO; 
+		EntreprisesDTO entrepriseDTO = modelMapper.map(entreprise, EntreprisesDTO.class);
+		if (entreprise.getSecteur() != null) {
+			entrepriseDTO.setNomSec(entreprise.getSecteur().getNomSec());
 		}
-	    /*EntreprisesDTO dto = new EntreprisesDTO();
-
-	    dto.setIdEnt(entreprise.getIdEnt());
-	    dto.setNomEnt(entreprise.getNomEnt());
-	    dto.setChiffreAff(entreprise.getChiffreAff());
-	    dto.setDateCre(entreprise.getDateCre());
-	    dto.setEmail(entreprise.getEmail());
-	    dto.setSecteur(entreprise.getSecteur());
-	    //dto.setNomSec(entreprise.getSecteur().getNomSec());
-
-	    return dto;*/
-
-	    /*
-	    return EntreprisesDTO.builder()
-	        .idEnt(entreprise.getIdEnt())
-	        .nomEnt(entreprise.getNomEnt())
-	        .chiffreAff(entreprise.getChiffreAff())
-	        .dateCre(entreprise.getDateCre())
-	        .email(entreprise.getEmail())
-	        .secteur(entreprise.getSecteur())
-	        .build();
-	    */
-
-	@Override 
-	public Entreprise convertDtoToEntity(EntreprisesDTO entrepriseDto) { 
-		Entreprise entreprise = new Entreprise();
-		entreprise = modelMapper.map(entrepriseDto,Entreprise.class);
-		return entreprise;
+		return entrepriseDTO;
 	}
-		/*Entreprise entreprise = new Entreprise(); 
-		
-		entreprise.setIdEnt(entrepriseDto.getIdEnt()); 
-		entreprise.setNomEnt(entrepriseDto.getNomEnt()); 
-		entreprise.setChiffreAff(entrepriseDto.getChiffreAff()); 
-		entreprise.setDateCre(entrepriseDto.getDateCre()); 
-		entreprise.setSecteur(entrepriseDto.getSecteur());   
-		return entreprise;  
-	} */
-
 }

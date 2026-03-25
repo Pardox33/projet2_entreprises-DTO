@@ -10,7 +10,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 
 import com.nadia.entreprises.entities.Entreprise;
-import com.nadia.entreprises.service.EntrepriseService;
 
 @SpringBootApplication
 public class EntreprisesApplication implements CommandLineRunner {
@@ -18,8 +17,10 @@ public class EntreprisesApplication implements CommandLineRunner {
 	@Autowired
 	private RepositoryRestConfiguration repositoryRestConfiguration;
 
-	/*@Autowired
-	EntrepriseService entrepriseService;*/
+	/*
+	 * @Autowired
+	 * EntrepriseService entrepriseService;
+	 */
 
 	public static void main(String[] args) {
 		SpringApplication.run(EntreprisesApplication.class, args);

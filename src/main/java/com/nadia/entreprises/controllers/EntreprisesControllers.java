@@ -1,10 +1,5 @@
 package com.nadia.entreprises.controllers;
 
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.List;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Controller;
@@ -16,8 +11,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import com.nadia.entreprises.dto.EntreprisesDTO;
-import com.nadia.entreprises.entities.Entreprise;
-import com.nadia.entreprises.entities.Secteur;
 import com.nadia.entreprises.service.EntrepriseService;
 
 import jakarta.validation.Valid;
@@ -25,20 +18,22 @@ import jakarta.validation.Valid;
 @Controller
 public class EntreprisesControllers {
 
+	@Autowired
+	private EntrepriseService entrepriseService;
+
 	@GetMapping("/accessDenied")
 	public String error() {
 		return "accessDenied";
 	}
 
-	@Autowired
-	EntrepriseService entrepriseService;
-
 	@RequestMapping("/listeEntreprises")
-	public String listeEntreprises(ModelMap modelMap, @RequestParam(name = "page", defaultValue = "0") int page,
+	public String listeEntreprises(ModelMap modelMap,
+			@RequestParam(name = "page", defaultValue = "0") int page,
 			@RequestParam(name = "size", defaultValue = "2") int size) {
 
-		Page<Entreprise> ents = entrepriseService.getAllEntreprisesParPage(page, size);
-		modelMap.addAttribute("entreprises", ents);
+		Page<EntreprisesDTO> ents = entrepriseService.getAllEntreprisesParPage(page, size)
+				.map(entrepriseService::convertEntityToDto);
+		modelMap.addAttribute("entreprises", ents.getContent());
 		modelMap.addAttribute("pages", new int[ents.getTotalPages()]);
 		modelMap.addAttribute("currentPage", page);
 		modelMap.addAttribute("size", size);
@@ -47,7 +42,7 @@ public class EntreprisesControllers {
 
 	@RequestMapping("/showCreate")
 	public String showCreate(ModelMap modelMap) {
-		modelMap.addAttribute("entreprise", new Entreprise());
+		modelMap.addAttribute("entreprise", new EntreprisesDTO());
 		modelMap.addAttribute("secteurs", entrepriseService.getAllSecteur());
 		return "createEntreprises";
 	}
@@ -55,9 +50,9 @@ public class EntreprisesControllers {
 	@RequestMapping("/saveEntreprise")
 	public String saveEntreprise(@Valid @ModelAttribute("entreprise") EntreprisesDTO entrepriseDto,
 			BindingResult bindingResult) {
-		if (bindingResult.hasErrors())
+		if (bindingResult.hasErrors()) {
 			return "createEntreprises";
-
+		}
 		entrepriseService.saveEntreprise(entrepriseDto);
 		return "redirect:/listeEntreprises";
 	}
@@ -68,7 +63,8 @@ public class EntreprisesControllers {
 			@RequestParam(name = "size", defaultValue = "2") int size) {
 
 		entrepriseService.deleteEntrepriseById(id);
-		Page<Entreprise> ents = entrepriseService.getAllEntreprisesParPage(page, size);
+		Page<EntreprisesDTO> ents = entrepriseService.getAllEntreprisesParPage(page, size)
+				.map(entrepriseService::convertEntityToDto);
 		if (page >= ents.getTotalPages() && page > 0) {
 			page--;
 		}
@@ -78,7 +74,9 @@ public class EntreprisesControllers {
 	@RequestMapping("/modifierEntreprise")
 	public String editerEntreprise(@RequestParam("id") Long id,
 			@RequestParam(name = "page", defaultValue = "0") int page,
-			@RequestParam(name = "size", defaultValue = "2") int size, ModelMap modelMap) {
+			@RequestParam(name = "size", defaultValue = "2") int size,
+			ModelMap modelMap) {
+
 		modelMap.addAttribute("entreprise", entrepriseService.getEntreprise(id));
 		modelMap.addAttribute("secteurs", entrepriseService.getAllSecteur());
 		modelMap.addAttribute("currentPage", page);
@@ -87,31 +85,23 @@ public class EntreprisesControllers {
 	}
 
 	@RequestMapping("/saveOrUpdateEntreprise")
-	public String saveOrUpdateEntreprise(@Valid @ModelAttribute("entreprise") Entreprise entreprise,
-			BindingResult bindingResult, @RequestParam(name = "page", defaultValue = "0") int page,
-			@RequestParam(name = "size", defaultValue = "2") int size, ModelMap modelMap) {
+	public String saveOrUpdateEntreprise(@Valid @ModelAttribute("entreprise") EntreprisesDTO entrepriseDto,
+			BindingResult bindingResult,
+			@RequestParam(name = "page", defaultValue = "0") int page,
+			@RequestParam(name = "size", defaultValue = "2") int size,
+			ModelMap modelMap) {
 
 		if (bindingResult.hasErrors()) {
 			modelMap.addAttribute("secteurs", entrepriseService.getAllSecteur());
 			return "createEntreprises";
 		}
 
-		
-		EntreprisesDTO dto = new EntreprisesDTO();
-		dto.setIdEnt(entreprise.getIdEnt());
-		dto.setNomEnt(entreprise.getNomEnt());
-		dto.setChiffreAff(entreprise.getChiffreAff());
-		dto.setDateCre(entreprise.getDateCre());
-		dto.setEmail(entreprise.getEmail());
-		dto.setSecteur(entreprise.getSecteur());
-
-		if (entreprise.getIdEnt() == null) {
-			entrepriseService.saveEntreprise(dto);
+		if (entrepriseDto.getIdEnt() == null) {
+			entrepriseService.saveEntreprise(entrepriseDto);
 		} else {
-			entrepriseService.updateEntreprise(dto);
+			entrepriseService.updateEntreprise(entrepriseDto);
 		}
 
 		return "redirect:/listeEntreprises?page=" + page + "&size=" + size;
 	}
-
 }
